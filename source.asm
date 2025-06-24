@@ -6,8 +6,11 @@
 ;./max-subcadeia
 
 segment .data
-a: dq 0
+size: dq 5							; Define o tamanho dos arrays
+m_size: dq 6						; Define o tamanho da matriz (size + 1)
+in: dq 0							; Usada no input
 cnt: dq 0
+br_str: dq "", 0x0A, 0				; Break line
 fmt: dq "%lld ", 5, 0
 fmt_in: dq "%lld", 0
 fmt_out: dq "The sorted array is: ", 5, 0
@@ -17,7 +20,7 @@ msg: dq "Insira 5 números inteiros: ", 5, 0
 segment .bss
 array resq 5
 array2 resq 5
-matrix resq 12						; Matrix bidimensional de tamanho 5 com pelo menos +1 linha e coluna
+matrix resq 12						; Matrix bidimensional de tamanho 5 com +1 linha e +1 coluna
 
 segment .text
 global main
@@ -35,95 +38,97 @@ mov RCX, 0
 mov RBX, 0
 
 INPUT_ARRAY: 						; Recebe o input - 5 valores
-	cmp RCX, 5						; Verifica se os 5 valores foram dados
+	cmp RCX, [size]					; Verifica se os 5 valores foram dados
 	mov RDI, nl
 	jz ARRAY2_MSG					; Vá para o DONE depois do 5 valor
 	mov [cnt], RCX
 	mov RAX, 0
 	mov RDI, fmt_in
-	mov RSI, a
+	mov RSI, in
 	call scanf
-	mov RAX, [a]
+	mov RAX, [in]
 	mov RCX, [cnt]
 	mov [array+RCX*8], RAX
 	inc RCX
 	jmp INPUT_ARRAY
 
 ARRAY2_MSG:
+	mov RAX, 0
+	mov RCX, 0
 	mov RDI, msg
 	call printf
 
-INPUT_ARRAY2: 						; Recebe o input - 5 valores
-	cmp RCX, 5						; Verifica se os 5 valores foram dados
+INPUT_ARRAY2:
+	cmp RCX, [size]
 	mov RDI, nl
-	jz DONE							; Vá para o DONE depois do 5 valor
+	jz INPUT_DONE
 	mov [cnt], RCX
 	mov RAX, 0
 	mov RDI, fmt_in
-	mov RSI, a
+	mov RSI, in
 	call scanf
-	mov RAX, [a]
+	mov RAX, [in]
 	mov RCX, [cnt]
 	mov [array2+RCX*8], RAX
 	inc RCX
 	jmp INPUT_ARRAY2
 
-DONE:								; Reinicializa
+INPUT_DONE:							; Reinicializa
 	mov RAX, 0
 	mov RCX, 0
-	mov RBX, 0	
 
-OUT_LOOP:							;reordered values from end_loop in output array
-	cmp RCX, 5
-	jge END_LOOP
-	mov [cnt], RCX
-	mov RAX, [array+RCX*8]
-
-IN_LOOP:							;sort input arrays
+INIT_MATRIX_LINE: 					; Inicializa a primeira linha com 0
+	cmp RCX, [m_size]
+	jge LINE_DONE
+	mov RAX, 0
+	mov [matrix+RCX*8], RAX
 	inc RCX
-	cmp RCX, 5
-	jz OK 
-	cmp RAX, [array+RCX*8]		
-	jle IN_LOOP		
-	xchg RAX, [array+RCX*8]			; swap position of values in the array -selection sort-
-	jmp IN_LOOP
+	jmp INIT_MATRIX_LINE
 
-OK:									;End Loop of input -->go to output loop
-	mov RCX, [cnt]
-	mov [array+RCX*8], RAX
+LINE_DONE:							; Reinicializa
+	mov RAX, 0
+	mov RCX, 0
+
+INIT_MATRIX_COL: 					; Inicializa a primeira coluna com 0
+	cmp RCX, [m_size]
+	jge COL_DONE
+	mov RAX, 0
+	mov [matrix+RCX*8], RAX
+	mov RCX, [m_size]
+	jmp INIT_MATRIX_COL
+
+COL_DONE:							; Reinicializa
+	mov RAX, 0
+	mov RCX, 0
+	mov RBX, 0
+	mov R8, 0
+
+PRINT_OUTER_MATRIX:					; Print matrix
+	cmp RBX, [m_size]
+	jge END
+
+PRINT_INNER_MATRIX:
+	cmp RCX, [m_size]
+	jge END_INNER_MATRIX
+	mov RAX, [m_size]				; Recebe o tamanho da matriz
+	mul RBX							; Multiplica o tamanho pelo index
+	shl RAX, 3						; Multiplica por 8 (shift de 3 bits)
+	mov RAX, [matrix+RAX+RCX*8]		; Aritmética da linha (RAX): size*tamanho*8
 	inc RCX
-	jmp OUT_LOOP
-
-END_LOOP:
-	mov RAX, 0
-	mov RBX, 0
-	mov RCX, 0
-	mov RDI, fmt_out
-	call printf
-	mov RAX, 0
-	mov RBX, 0
-	mov RCX, 0
-	mov RDI, nl
-	call printf
-	mov RAX, 0
-	mov RBX, 0
-	mov RCX, 0		
-
-PRINT_ARRAY:						;Print array
-	cmp RCX, 5
-	jz END
-	mov RDI, nl
-	mov RAX, [array+RCX*8]			;move pointer to next position
-	inc RCX	
 	mov [cnt], RCX
 	mov RDI, fmt
 	mov RSI, RAX
 	call printf
 	mov RCX, [cnt]
-	jmp PRINT_ARRAY
+	jmp PRINT_INNER_MATRIX
 
+END_INNER_MATRIX:					; Fim do loop interno, faz uma quebra de linha
+	mov RDI, br_str
+	call printf
+	inc RBX
+	jmp PRINT_OUTER_MATRIX
 
-END:	
+END:
 	mov RDI, nl
 	call printf
 	mov RAX, 0
