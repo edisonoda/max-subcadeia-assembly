@@ -1,4 +1,4 @@
-; Algoritmo para encontrar a máxima subcadeia comum entre dois arrays de inteiros com tamanho 5
+; Algoritmo para encontrar o tamanho da máxima subcadeia comum entre dois arrays de inteiros com tamanho 5
 
 ; Comandos para compilação (em linux 64-bits)
 ; nasm -felf64 source.asm
@@ -8,16 +8,16 @@
 segment .data
 a: dq 0
 cnt: dq 0
-fmt: dq "%lld ",10, 0
+fmt: dq "%lld ", 5, 0
 fmt_in: dq "%lld", 0
-fmt_out: dq "The sorted array is: ", 10, 0
-nl: db "", 10, 0
-msg: dq "Enter 10 values (positive/negative): ", 10, 0
+fmt_out: dq "The sorted array is: ", 5, 0
+nl: db "", 5, 0
+msg: dq "Insira 5 números inteiros: ", 5, 0
 
 segment .bss
-array resq 11
-array2 resq 11
-matrix resq 21
+array resq 5
+array2 resq 5
+matrix resq 12						; Matrix bidimensional de tamanho 5 com pelo menos +1 linha e coluna
 
 segment .text
 global main
@@ -34,10 +34,10 @@ mov RAX, 0
 mov RCX, 0
 mov RBX, 0
 
-INPUT_ARRAY: 						;Take input as aarray - 10 values
-	cmp RCX, 10						; check if 10 input given or not
+INPUT_ARRAY: 						; Recebe o input - 5 valores
+	cmp RCX, 5						; Verifica se os 5 valores foram dados
 	mov RDI, nl
-	jz DONE							; go to done after complete input
+	jz ARRAY2_MSG					; Vá para o DONE depois do 5 valor
 	mov [cnt], RCX
 	mov RAX, 0
 	mov RDI, fmt_in
@@ -49,20 +49,39 @@ INPUT_ARRAY: 						;Take input as aarray - 10 values
 	inc RCX
 	jmp INPUT_ARRAY
 
-DONE:								; reinitialize
+ARRAY2_MSG:
+	mov RDI, msg
+	call printf
+
+INPUT_ARRAY2: 						; Recebe o input - 5 valores
+	cmp RCX, 5						; Verifica se os 5 valores foram dados
+	mov RDI, nl
+	jz DONE							; Vá para o DONE depois do 5 valor
+	mov [cnt], RCX
+	mov RAX, 0
+	mov RDI, fmt_in
+	mov RSI, a
+	call scanf
+	mov RAX, [a]
+	mov RCX, [cnt]
+	mov [array2+RCX*8], RAX
+	inc RCX
+	jmp INPUT_ARRAY2
+
+DONE:								; Reinicializa
 	mov RAX, 0
 	mov RCX, 0
 	mov RBX, 0	
 
 OUT_LOOP:							;reordered values from end_loop in output array
-	cmp RCX, 10
+	cmp RCX, 5
 	jge END_LOOP
 	mov [cnt], RCX
 	mov RAX, [array+RCX*8]
 
 IN_LOOP:							;sort input arrays
 	inc RCX
-	cmp RCX, 10
+	cmp RCX, 5
 	jz OK 
 	cmp RAX, [array+RCX*8]		
 	jle IN_LOOP		
@@ -91,7 +110,7 @@ END_LOOP:
 	mov RCX, 0		
 
 PRINT_ARRAY:						;Print array
-	cmp RCX, 10
+	cmp RCX, 5
 	jz END
 	mov RDI, nl
 	mov RAX, [array+RCX*8]			;move pointer to next position
