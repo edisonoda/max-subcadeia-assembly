@@ -1,18 +1,13 @@
-; how to compile
+; Algoritmo para encontrar a máxima subcadeia comum entre dois arrays de inteiros com tamanho 5
+
+; Comandos para compilação (em linux 64-bits)
 ; nasm -felf64 source.asm
 ; gcc -no-pie source.o -o max-subcadeia
 ;./max-subcadeia
 
 segment .data
-a: dq 2
-b: dq 0
-ind: dq 0
+a: dq 0
 cnt: dq 0
-cnt2: dq 0
-mini: dq 0
-maxi: dq 0
-min_pos: dq 0
-max_pos: dq 0
 fmt: dq "%lld ",10, 0
 fmt_in: dq "%lld", 0
 fmt_out: dq "The sorted array is: ", 10, 0
@@ -20,8 +15,9 @@ nl: db "", 10, 0
 msg: dq "Enter 10 values (positive/negative): ", 10, 0
 
 segment .bss
-array resq 21
-array2 resq 21
+array resq 11
+array2 resq 11
+matrix resq 21
 
 segment .text
 global main
@@ -50,10 +46,8 @@ INPUT_ARRAY: 						;Take input as aarray - 10 values
 	mov RAX, [a]
 	mov RCX, [cnt]
 	mov [array+RCX*8], RAX
-	mov [array2+RCX*8], RAX
-	add RBX, [a]	
-	inc RCX	
-	jmp INPUT_ARRAY 
+	inc RCX
+	jmp INPUT_ARRAY
 
 DONE:								; reinitialize
 	mov RAX, 0
