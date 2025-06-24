@@ -1,6 +1,6 @@
 ; how to compile
 ; nasm -felf64 source.asm
-; gcc source.o -o max-subcadeia
+; gcc -no-pie source.o -o max-subcadeia
 ;./max-subcadeia
 
 segment .data
