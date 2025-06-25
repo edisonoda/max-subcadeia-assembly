@@ -35,7 +35,7 @@ push RBP
 
 mov RDI, msg_in
 call printf
-	
+
 mov RAX, 0
 mov RCX, 0
 mov RBX, 0
@@ -221,7 +221,7 @@ END_INNER_MATRIX:					; Fim do loop interno, faz uma quebra de linha
 END:
 	mov RDI, br_str
 	call printf
-	
+
 	mov RAX, [m_size]
 	mul RAX
 	sub RAX, 1
