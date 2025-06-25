@@ -11,7 +11,10 @@ m_size: dq 6						; Define o tamanho da matriz (size + 1)
 in: dq 0							; Usada no input
 cnt: dq 0
 br_str: dq "", 0x0A, 0				; Break line
-fmt: dq `%lld\t`, 5, 0
+tab_str: dq `\t`, 0					; Tab
+fmt: dq ` %lld\t`, 5, 0				; Default format
+fmt_a: dq `\[%lld\]\t`, 5, 0		; Format of array number print
+fmt_m: dq `(%lld)\t`, 5, 0			; Format of match found
 fmt_in: dq "%lld", 0
 nl: db "", 5, 0
 msg_in: dq "Insira 5 números inteiros: ", 5, 0
@@ -61,7 +64,7 @@ ARRAY2_MSG:
 INPUT_ARRAY2:
 	cmp RCX, [size]
 	mov RDI, nl
-	jz INPUT_DONE
+	jz PREP_LINE
 	mov [cnt], RCX
 	mov RAX, 0
 	mov RDI, fmt_in
@@ -73,7 +76,7 @@ INPUT_ARRAY2:
 	inc RCX
 	jmp INPUT_ARRAY2
 
-INPUT_DONE:							; Reinicializa
+PREP_LINE:							; Reinicializa
 	mov RAX, 0
 	mov RCX, 0
 
@@ -91,22 +94,53 @@ PREP_COL:							; Reinicializa
 
 INIT_MATRIX_COL: 					; Inicializa a primeira coluna com 0
 	cmp RCX, [m_size]
-	jge PREP_MATRIX
+	jge PREP_HEADER
 	mov RAX, 0
 	mov [matrix+RCX*8], RAX
 	mov RCX, [m_size]
 	jmp INIT_MATRIX_COL
 
+PREP_HEADER:						; Reinicializa
+	mov RDI, br_str
+	call printf
+	mov RDI, tab_str
+	call printf
+
+	mov RAX, 0
+	mov RCX, 0
+	mov RBX, 0
+
+HEADER: 							; Faz o print do header da matriz
+	cmp RCX, [size]
+	jge PREP_MATRIX
+	mov [cnt], RCX
+	mov RDI, fmt_a
+	mov RSI, [array2+RCX*8]
+	call printf
+	mov RCX, [cnt]
+	inc RCX
+	jmp HEADER
+
 PREP_MATRIX:						; Reinicializa
+	mov RDI, br_str
+	call printf
+
 	mov RAX, 0
 	mov RCX, 1
 	mov RBX, 1
 
-OUT_LOOP:					; Print matrix
+OUT_LOOP:							; Loop externo, varre o primeiro array (equivale às linhas)
 	cmp RBX, [m_size]
 	jge END
+	mov [cnt], RCX
+	mov R14, RBX
+	sub R14, 1
+	mov RDI, fmt_a
+	mov RSI, [array+R14*8]
+	call printf
+	mov RCX, [cnt]
 
-IN_LOOP:
+IN_LOOP:							; Loop interno, varreo segundo array (equivale às colunas)
 	cmp RCX, [m_size]
 	jge END_INNER_MATRIX
 
@@ -153,7 +187,16 @@ MATCH:
 	mov R14, [matrix+R12+R13]
 	add R14, 1						; Adiciona + 1 pois deu match
 	mov [matrix+RAX+RCX*8], R14
-	jmp PRINT
+	jmp MATCH_PRINT
+
+MATCH_PRINT:
+	mov [cnt], RCX
+	mov RDI, fmt_m
+	mov RSI, R14
+	call printf
+	mov RCX, [cnt]
+	inc RCX
+	jmp IN_LOOP
 
 LINE_GREATER:
 	mov [matrix+RAX+RCX*8], R14
@@ -176,11 +219,14 @@ END_INNER_MATRIX:					; Fim do loop interno, faz uma quebra de linha
 	jmp OUT_LOOP
 
 END:
+	mov RDI, br_str
+	call printf
+	
 	mov RAX, [m_size]
 	mul RAX
 	sub RAX, 1
 	mov RDI, msg_out
-	mov RSI, [matrix+RAX]
+	mov RSI, [matrix+RAX*8]
 	call printf
 
 	mov RDI, br_str
