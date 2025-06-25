@@ -1,4 +1,6 @@
 ; Algoritmo para encontrar o tamanho da máxima subcadeia comum entre dois arrays de inteiros com tamanho 5
+; Trabalho Individual
+; Aluno: Edison Francisco Furusato Oda
 
 ; Comandos para compilação (em linux 64-bits)
 ; nasm -felf64 source.asm
@@ -23,7 +25,7 @@ msg_out: dq "A máxima subcadeia comum tem %lld números.", 5, 0
 segment .bss
 array resq 5
 array2 resq 5
-matrix resq 12						; Matrix bidimensional de tamanho 5 com +1 linha e +1 coluna
+matrix resq 36						; Matrix bidimensional de tamanho 5 com +1 linha e +1 coluna
 
 segment .text
 global main
@@ -140,7 +142,7 @@ OUT_LOOP:							; Loop externo, varre o primeiro array (equivale às linhas)
 	call printf
 	mov RCX, [cnt]
 
-IN_LOOP:							; Loop interno, varreo segundo array (equivale às colunas)
+IN_LOOP:							; Loop interno, varre o segundo array (equivale às colunas)
 	cmp RCX, [m_size]
 	jge END_INNER_MATRIX
 
