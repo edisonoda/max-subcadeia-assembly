@@ -13,9 +13,9 @@ cnt: dq 0
 br_str: dq "", 0x0A, 0				; Break line
 fmt: dq "%lld ", 5, 0
 fmt_in: dq "%lld", 0
-fmt_out: dq "The sorted array is: ", 5, 0
 nl: db "", 5, 0
-msg: dq "Insira 5 números inteiros: ", 5, 0
+msg_in: dq "Insira 5 números inteiros: ", 5, 0
+msg_out: dq "A máxima subcadeia comum tem %lld números.", 5, 0
 
 segment .bss
 array resq 5
@@ -30,7 +30,7 @@ extern scanf
 main:
 push RBP
 
-mov RDI, msg
+mov RDI, msg_in
 call printf
 	
 mov RAX, 0
@@ -55,7 +55,7 @@ INPUT_ARRAY: 						; Recebe o input - 5 valores
 ARRAY2_MSG:
 	mov RAX, 0
 	mov RCX, 0
-	mov RDI, msg
+	mov RDI, msg_in
 	call printf
 
 INPUT_ARRAY2:
@@ -129,11 +129,23 @@ END_INNER_MATRIX:					; Fim do loop interno, faz uma quebra de linha
 	jmp PRINT_OUTER_MATRIX
 
 END:
-	mov RDI, nl
+	mov RAX, [m_size]
+	mul RAX
+	sub RAX, 1
+	mov RDI, msg_out
+	mov RSI, [matrix+RAX]
 	call printf
+
+	mov RDI, br_str
+	call printf
+	
 	mov RAX, 0
 	mov RBX, 0
 	mov RCX, 0
+	mov RDI, nl
+	call printf
 	
 	pop RBP
 	ret
+
+
