@@ -11,7 +11,7 @@ m_size: dq 6						; Define o tamanho da matriz (size + 1)
 in: dq 0							; Usada no input
 cnt: dq 0
 br_str: dq "", 0x0A, 0				; Break line
-fmt: dq "%lld ", 5, 0
+fmt: dq `%lld\t`, 5, 0
 fmt_in: dq "%lld", 0
 nl: db "", 5, 0
 msg_in: dq "Insira 5 números inteiros: ", 5, 0
@@ -79,54 +79,101 @@ INPUT_DONE:							; Reinicializa
 
 INIT_MATRIX_LINE: 					; Inicializa a primeira linha com 0
 	cmp RCX, [m_size]
-	jge LINE_DONE
+	jge PREP_COL
 	mov RAX, 0
 	mov [matrix+RCX*8], RAX
 	inc RCX
 	jmp INIT_MATRIX_LINE
 
-LINE_DONE:							; Reinicializa
+PREP_COL:							; Reinicializa
 	mov RAX, 0
 	mov RCX, 0
 
 INIT_MATRIX_COL: 					; Inicializa a primeira coluna com 0
 	cmp RCX, [m_size]
-	jge COL_DONE
+	jge PREP_MATRIX
 	mov RAX, 0
 	mov [matrix+RCX*8], RAX
 	mov RCX, [m_size]
 	jmp INIT_MATRIX_COL
 
-COL_DONE:							; Reinicializa
+PREP_MATRIX:						; Reinicializa
 	mov RAX, 0
-	mov RCX, 0
-	mov RBX, 0
-	mov R8, 0
+	mov RCX, 1
+	mov RBX, 1
 
-PRINT_OUTER_MATRIX:					; Print matrix
+OUT_LOOP:					; Print matrix
 	cmp RBX, [m_size]
 	jge END
 
-PRINT_INNER_MATRIX:
+IN_LOOP:
 	cmp RCX, [m_size]
 	jge END_INNER_MATRIX
+
 	mov RAX, [m_size]				; Recebe o tamanho da matriz
-	mul RBX							; Multiplica o tamanho pelo index
+	; R12 = i-1
+	mov R12, RBX					; Guarda o index da linha em R12
+	sub R12, 1						; Subtrai 1
+	mul R12							; Multiplica o tamanho pelo index
 	shl RAX, 3						; Multiplica por 8 (shift de 3 bits)
-	mov RAX, [matrix+RAX+RCX*8]		; Aritmética da linha (RAX): size*tamanho*8
-	inc RCX
+	mov R12, RAX
+	; R13 = j-1
+	mov R13, RCX
+	sub R13, 1
+	shl R13, 3
+
+	; Se array[rbx - 1] = array[rcx - 1]
+	mov R14, RBX
+	sub R14, 1
+	mov R15, RCX
+	sub R15, 1
+	mov R14, [array+R14*8]
+	mov R15, [array2+R15*8]
+	cmp R14, R15
+	jz MATCH
+
+	; Se m[i, j-1] > m[i-1, j]
+	mov RAX, [m_size]
+	mul RBX
+	shl RAX, 3
+	mov R14, [matrix+RAX+R13]
+	mov R15, [matrix+R12+RCX*8]
+	cmp R14, R15
+	jg LINE_GREATER
+
+	; Senão
+	mov [matrix+RAX+RCX*8], R15
+	mov R14, R15
+	jmp PRINT
+
+MATCH:
+	mov RAX, [m_size]
+	mul RBX
+	shl RAX, 3
+	mov R14, [matrix+R12+R13]
+	add R14, 1						; Adiciona + 1 pois deu match
+	mov [matrix+RAX+RCX*8], R14
+	jmp PRINT
+
+LINE_GREATER:
+	mov [matrix+RAX+RCX*8], R14
+	jmp PRINT
+
+PRINT:
 	mov [cnt], RCX
 	mov RDI, fmt
-	mov RSI, RAX
+	mov RSI, R14
 	call printf
 	mov RCX, [cnt]
-	jmp PRINT_INNER_MATRIX
+	inc RCX
+	jmp IN_LOOP
 
 END_INNER_MATRIX:					; Fim do loop interno, faz uma quebra de linha
 	mov RDI, br_str
 	call printf
 	inc RBX
-	jmp PRINT_OUTER_MATRIX
+	mov RCX, 1
+	jmp OUT_LOOP
 
 END:
 	mov RAX, [m_size]
